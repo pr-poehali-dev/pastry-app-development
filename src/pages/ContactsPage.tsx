@@ -1,14 +1,66 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Icon from '@/components/ui/icon';
+
+const CONTACTS_URL = 'https://functions.poehali.dev/8cba98d4-2078-4440-8ca6-5726efaf330b';
+
+interface ContactsData {
+  address: string;
+  phone: string;
+  email: string;
+  work_hours: string;
+}
+
+const FALLBACK: ContactsData = {
+  address: 'ул. Пушкина, 12, Москва',
+  phone: '+7 (495) 123-45-67',
+  email: 'hello@patisserie.ru',
+  work_hours: 'Пн–Пт: 9:00 – 20:00, Сб–Вс: 10:00 – 19:00',
+};
 
 export default function ContactsPage() {
   const [form, setForm] = useState({ name: '', phone: '', message: '' });
+  const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
+  const [error, setError] = useState('');
+  const [contacts, setContacts] = useState<ContactsData>(FALLBACK);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    fetch(CONTACTS_URL)
+      .then(r => r.json())
+      .then(data => { if (data.phone) setContacts(data); })
+      .catch(() => {});
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSent(true);
+    setSending(true);
+    setError('');
+    try {
+      const res = await fetch(CONTACTS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setSent(true);
+        setForm({ name: '', phone: '', message: '' });
+      } else {
+        setError(data.error || 'Ошибка отправки');
+      }
+    } catch {
+      setError('Не удалось отправить. Попробуйте позже.');
+    } finally {
+      setSending(false);
+    }
   };
+
+  const contactItems = [
+    { icon: 'MapPin', label: 'Адрес', value: contacts.address },
+    { icon: 'Clock', label: 'Время работы', value: contacts.work_hours },
+    { icon: 'Phone', label: 'Телефон', value: contacts.phone },
+    { icon: 'Mail', label: 'Email', value: contacts.email },
+  ];
 
   return (
     <div className="min-h-screen pt-24 pb-16">
@@ -32,28 +84,7 @@ export default function ContactsPage() {
             </div>
 
             <div className="grid gap-6">
-              {[
-                {
-                  icon: 'MapPin',
-                  label: 'Адрес',
-                  value: 'ул. Пушкина, 12\nМосква, 101000',
-                },
-                {
-                  icon: 'Clock',
-                  label: 'Время работы',
-                  value: 'Пн–Пт: 9:00 – 20:00\nСб–Вс: 10:00 – 19:00',
-                },
-                {
-                  icon: 'Phone',
-                  label: 'Телефон',
-                  value: '+7 (495) 123-45-67',
-                },
-                {
-                  icon: 'Mail',
-                  label: 'Email',
-                  value: 'hello@patisserie.ru',
-                },
-              ].map((c, i) => (
+              {contactItems.map((c, i) => (
                 <div key={i} className="flex gap-4">
                   <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center flex-shrink-0">
                     <Icon name={c.icon} size={16} className="text-foreground" />
@@ -149,11 +180,15 @@ export default function ContactsPage() {
                         className="w-full px-4 py-3 bg-background border border-border rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-foreground/30 placeholder:text-muted-foreground resize-none"
                       />
                     </div>
+                    {error && (
+                      <p className="text-sm text-destructive">{error}</p>
+                    )}
                     <button
                       type="submit"
-                      className="w-full bg-foreground text-background py-4 rounded-xl font-medium hover:opacity-80 transition-opacity"
+                      disabled={sending}
+                      className="w-full bg-foreground text-background py-4 rounded-xl font-medium hover:opacity-80 transition-opacity disabled:opacity-50"
                     >
-                      Отправить сообщение
+                      {sending ? 'Отправляем...' : 'Отправить сообщение'}
                     </button>
                   </form>
                 </>

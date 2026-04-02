@@ -1,0 +1,24 @@
+{
+  "tests": [
+    {
+      "name": "POST оформить заказ",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "client_name": "Тест Тестов",
+        "client_phone": "+79001234567",
+        "address": "ул. Тестовая, д. 1",
+        "delivery_type": "courier",
+        "delivery_cost": 350,
+        "subtotal": 2800,
+        "total": 3150,
+        "bonus_earned": 157,
+        "bonus_spent": 0,
+        "items": [{"product_id": 1, "product_name": "Торт Медовик", "price": 2800, "quantity": 1}]
+      },
+      "expectedStatus": 200,
+      "expectedBody": {"ok": true},
+      "bodyMatcher": "partial"
+    }
+  ]
+}
