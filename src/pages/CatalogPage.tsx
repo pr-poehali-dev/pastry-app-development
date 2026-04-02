@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { products, categories, Product } from '@/data/products';
+import { products as staticProducts, categories as staticCategories, Product } from '@/data/products';
+import { useCatalog } from '@/hooks/useCatalog';
 import ProductCard from '@/components/ProductCard';
 import Icon from '@/components/ui/icon';
 
@@ -10,6 +11,13 @@ interface CatalogPageProps {
 export default function CatalogPage({ onSelectProduct }: CatalogPageProps) {
   const [activeCategory, setActiveCategory] = useState('all');
   const [search, setSearch] = useState('');
+  const { data, loading } = useCatalog();
+
+  const products = data?.products ?? staticProducts;
+  const categories = [
+    { id: 'all', label: 'Все' },
+    ...(data?.categories ?? staticCategories.filter(c => c.id !== 'all')),
+  ];
 
   const filtered = products.filter(p => {
     const matchCat = activeCategory === 'all' || p.category === activeCategory;
@@ -25,7 +33,6 @@ export default function CatalogPage({ onSelectProduct }: CatalogPageProps) {
           <h1 className="font-serif text-5xl font-light mb-8" style={{ fontFamily: 'Cormorant, serif' }}>
             Каталог
           </h1>
-          {/* Search */}
           <div className="relative max-w-md mb-8">
             <Icon name="Search" size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <input
@@ -36,7 +43,6 @@ export default function CatalogPage({ onSelectProduct }: CatalogPageProps) {
               className="w-full pl-10 pr-4 py-3 bg-card border border-border rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-foreground/30 placeholder:text-muted-foreground"
             />
           </div>
-          {/* Categories */}
           <div className="flex flex-wrap gap-2">
             {categories.map(cat => (
               <button
@@ -54,7 +60,21 @@ export default function CatalogPage({ onSelectProduct }: CatalogPageProps) {
           </div>
         </div>
 
-        {filtered.length === 0 ? (
+        {loading ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="bg-card rounded-2xl border border-border overflow-hidden animate-pulse">
+                <div className="aspect-square bg-secondary" />
+                <div className="p-4 space-y-2">
+                  <div className="h-3 bg-secondary rounded w-1/3" />
+                  <div className="h-5 bg-secondary rounded w-3/4" />
+                  <div className="h-3 bg-secondary rounded w-full" />
+                  <div className="h-8 bg-secondary rounded" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="text-center py-24">
             <Icon name="Search" size={40} className="text-muted-foreground mx-auto mb-4" />
             <p className="text-muted-foreground">Ничего не найдено</p>
