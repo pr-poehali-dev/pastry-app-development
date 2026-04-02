@@ -1,0 +1,12 @@
+{
+  "tests": [
+    {
+      "name": "Получить данные О нас",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200,
+      "expectedBody": {"founded_year": 2018, "phone": "+7 (495) 123-45-67"},
+      "bodyMatcher": "partial"
+    }
+  ]
+}
